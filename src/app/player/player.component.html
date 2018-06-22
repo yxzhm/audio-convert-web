@@ -4,21 +4,26 @@
     <div class="input-group">
                 <span class="input-group-btn">
                     <span class="btn btn-primary btn-file">
-                        Browse… <input type="file" single="">
+                        Browse… <input type="file" single="" (change)="browseFile($event)">
                     </span>
                 </span>
-      <input type="text" class="form-control" readonly="">
+      <input type="text" class="form-control" readonly="" required="" value="{{selectedFile.name}}">
     </div>
   </div>
   <p></p>
   <select class="custom-select d-block w-100" id="codec" required="">
     <option value="">Choose Codec...</option>
-    <option>United States</option>
+    <option *ngFor="let codec of codecList">{{codec}}</option>
   </select>
   <p></p>
-  <select class="custom-select d-block w-100" id="a" required="">
+  <select class="custom-select d-block w-100" id="para" required="">
     <option value="">Choose Parameter...</option>
-    <option>United States</option>
+    <option *ngFor="let para of paraList">{{para}}</option>
+  </select>
+  <p></p>
+  <select class="custom-select d-block w-100" id="Container" required="">
+    <option value="">Choose Container...</option>
+    <option *ngFor="let container of containerList">{{container}}</option>
   </select>
   <p></p>
   <p></p>
