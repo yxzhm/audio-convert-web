@@ -11,22 +11,22 @@
     </div>
   </div>
   <p></p>
-  <select class="custom-select d-block w-100" id="codec" required="">
+  <select class="custom-select d-block w-100" id="codecSelect" required="" (change)="codecChange($event)">
     <option value="">Choose Codec...</option>
-    <option *ngFor="let codec of codecList">{{codec}}</option>
+    <option *ngFor="let codec of codecList" [ngValue]="codec">{{codec}}</option>
   </select>
   <p></p>
-  <select class="custom-select d-block w-100" id="para" required="">
+  <select class="custom-select d-block w-100" id="para" required="" (change)="paraChange($event)">
     <option value="">Choose Parameter...</option>
-    <option *ngFor="let para of paraList">{{para}}</option>
+    <option *ngFor="let para of paraList" [ngValue]="para">{{para}}</option>
   </select>
   <p></p>
-  <select class="custom-select d-block w-100" id="Container" required="">
+  <select class="custom-select d-block w-100" id="Container" required="" (change)="containerChange($event)">
     <option value="">Choose Container...</option>
     <option *ngFor="let container of containerList">{{container}}</option>
   </select>
   <p></p>
   <p></p>
-  <button class="btn btn-lg btn-primary btn-block" type="submit">Covert & Play</button>
+  <button type="button" class="btn btn-lg btn-primary btn-block" (click)="sendToServer()">Covert & Play</button>
   <p class="mt-5 mb-3 text-muted">© 2018</p>
 </form>
