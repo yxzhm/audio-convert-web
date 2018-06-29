@@ -54,7 +54,7 @@ export class PlayerComponent implements OnInit {
       message: 'query_end',
     };
 
-    this.ws = new WebSocket('ws://' + location.host + (location.port ? ':' + location.port : '') + '/ws');
+    this.ws = new WebSocket('ws://' + location.host + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
       this.ws.send(JSON.stringify(query_begin));
