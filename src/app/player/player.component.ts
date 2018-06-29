@@ -25,7 +25,7 @@ export class PlayerComponent implements OnInit {
 
     this.paraList.push('NB');
     this.paraList.push('WB');
-    this.paraList.push('UB');
+    this.paraList.push('UWB');
 
     this.containerList.push('None');
     this.containerList.push('Nuance Frame');
@@ -53,15 +53,49 @@ export class PlayerComponent implements OnInit {
     const query_end = {
       message: 'query_end',
     };
-    this.ws = new WebSocket('ws://192.168.234.132:8080/ws');
+
+    this.ws = new WebSocket('ws://' + location.host + (location.port ? ':' + location.port : '') + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
       this.ws.send(JSON.stringify(query_begin));
       this.ws.send(fr.result);
       this.ws.send(JSON.stringify(query_end));
     };
+
+    const _ws = this.ws;
+    let rate = 8000;
     this.ws.onmessage = function (event) {
       console.log(event.data);
+      if (typeof(event.data) === 'string') {
+        const res = JSON.parse(event.data);
+        if (res['message'] === 'res_begin') {
+          console.log('res_begin');
+          rate = res['rate'];
+        }
+        if (res['message'] === 'res_end') {
+          console.log('res_end');
+          _ws.close();
+        }
+      } else {
+        const pcm16Buffer = new Int16Array(event.data);
+        const audioToPlay = new Float32Array(pcm16Buffer.length);
+        for (let i = 0; i < pcm16Buffer.length; i++) {
+          audioToPlay[i] = pcm16Buffer[i] / 32768;
+        }
+        // audioToPlay.set(event.data, 0);
+
+        const audioContext = new ((<any>window).AudioContext || (<any>window).webkitAudioContext)();
+        const audioBuffer = audioContext.createBuffer(1, audioToPlay.length, rate);
+        const source = audioContext.createBufferSource();
+
+        audioBuffer.getChannelData(0).set(audioToPlay);
+        source.buffer = audioBuffer;
+
+        source.connect(audioContext.destination);
+        source.start(0);
+
+      }
+
     };
   }
 
