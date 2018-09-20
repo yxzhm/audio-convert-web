@@ -23,13 +23,14 @@ export class PlayerComponent implements OnInit {
   ngOnInit() {
     this.codecList.push('Speex');
 
-    this.paraList.push('NB');
-    this.paraList.push('WB');
-    this.paraList.push('UWB');
+    // this.paraList.push('NB');
+    // this.paraList.push('WB');
+    // this.paraList.push('UWB');
 
-    this.containerList.push('None');
-    this.containerList.push('Nuance Frame');
+    // this.containerList.push('None');
+    // this.containerList.push('Nuance Frame');
 
+    this.codecList.push('Opus');
 
   }
 
@@ -105,6 +106,29 @@ export class PlayerComponent implements OnInit {
       this.selectedCodec = this.codecList[index];
     } else {
       this.selectedCodec = this.codecList[0];
+    }
+
+    this.paraList = [];
+    this.containerList = [];
+
+    if (this.selectedCodec === 'Speex') {
+
+      this.paraList.push('NB');
+      this.paraList.push('WB');
+      this.paraList.push('UWB');
+
+      this.containerList.push('None');
+      this.containerList.push('Nuance Frame');
+    }
+
+    if (this.selectedCodec === 'Opus') {
+      this.paraList.push('8K');
+      this.paraList.push('12K');
+      this.paraList.push('16K');
+      this.paraList.push('24K');
+      this.paraList.push('48K');
+
+      this.containerList.push('Nuance Frame');
     }
   }
 
