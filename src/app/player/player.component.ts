@@ -60,7 +60,7 @@ export class PlayerComponent implements OnInit {
     };
     const _ws = this.ws;
     let _t = this;
-
+    _t.showLoading=true;
     this.ws = new WebSocket('wss://' + location.host + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
@@ -104,7 +104,7 @@ export class PlayerComponent implements OnInit {
 
         audioBuffer.getChannelData(0).set(audioToPlay);
         source.buffer = audioBuffer;
-        _t.showLoading=true;
+
         source.connect(audioContext.destination);
         source.start(0);
 
