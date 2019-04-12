@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {of} from 'rxjs';
 
 @Component({
   selector: 'app-player',
@@ -17,24 +18,20 @@ export class PlayerComponent implements OnInit {
   ws: WebSocket = null;
 
   showLoading: boolean = false;
+  playing:boolean = false;
+
+  audioContext = null;
+  source = null;
 
   constructor() {
+    this.audioContext = new ((<any>window).AudioContext || (<any>window).webkitAudioContext)();
 
   }
 
   ngOnInit() {
     this.codecList.push('Speex');
-
-    // this.paraList.push('NB');
-    // this.paraList.push('WB');
-    // this.paraList.push('UWB');
-
-    // this.containerList.push('None');
-    // this.containerList.push('Nuance Frame');
-
     this.codecList.push('Opus');
     this.showLoading=false;
-
   }
 
   browseFile(fileInput: Event) {
@@ -44,8 +41,22 @@ export class PlayerComponent implements OnInit {
   }
 
   sendToServer() {
+    let _t = this;
+
     console.log('sending to server');
     console.log(this.selectedCodec);
+
+    this.stop();
+
+    this.source = this.audioContext.createBufferSource();
+    this.source.connect(this.audioContext.destination);
+
+    this.source.onended = function(event) {
+      _t.playing = false;
+      console.log("Play Stopped");
+    };
+
+
 
     const query_begin = {
       message: 'query_begin',
@@ -59,9 +70,9 @@ export class PlayerComponent implements OnInit {
       message: 'query_end',
     };
     const _ws = this.ws;
-    let _t = this;
     _t.showLoading=true;
-    this.ws = new WebSocket('wss://' + location.host + '/ws');
+    // this.ws = new WebSocket('wss://' + location.host + '/ws');
+    this.ws = new WebSocket('wss://' + "audio.yxzhm.com" + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
 
@@ -76,6 +87,9 @@ export class PlayerComponent implements OnInit {
       _t.showLoading=false;
       console.log('websocket error');
     };
+    this.ws.onclose = function (event) {
+      console.log("ws closed");
+    };
     this.ws.onmessage = function (event) {
       console.log(event.data);
       if (typeof(event.data) === 'string') {
@@ -88,7 +102,7 @@ export class PlayerComponent implements OnInit {
         if (res['message'] === 'res_end') {
           console.log('res_end');
           _t.showLoading=false;
-          _ws.close();
+          this.close();
         }
       } else {
         const pcm16Buffer = new Int16Array(event.data);
@@ -96,17 +110,11 @@ export class PlayerComponent implements OnInit {
         for (let i = 0; i < pcm16Buffer.length; i++) {
           audioToPlay[i] = pcm16Buffer[i] / 32768;
         }
-        // audioToPlay.set(event.data, 0);
 
-        const audioContext = new ((<any>window).AudioContext || (<any>window).webkitAudioContext)();
-        const audioBuffer = audioContext.createBuffer(1, audioToPlay.length, rate);
-        const source = audioContext.createBufferSource();
-
+        const audioBuffer = _t.audioContext.createBuffer(1, audioToPlay.length, rate);
         audioBuffer.getChannelData(0).set(audioToPlay);
-        source.buffer = audioBuffer;
-
-        source.connect(audioContext.destination);
-        source.start(0);
+        _t.source.buffer = audioBuffer;
+        _t.play(30);
 
       }
 
@@ -160,6 +168,23 @@ export class PlayerComponent implements OnInit {
       this.selectedContainer = this.containerList[index];
     } else {
       this.selectedContainer = this.containerList[0];
+    }
+  }
+
+  play(progress){
+    stop();
+    let offset = (this.source.buffer.duration * progress) /100;
+    console.log("Play Starting, the duration is "+this.source.buffer.duration+" the offset is"+offset);
+
+    this.source.start(0,offset);
+    this.playing=true;
+  }
+
+  stop(){
+    if(this.playing){
+      console.log("Play Stopping ");
+      this.source.stop();
+
     }
   }
 }
