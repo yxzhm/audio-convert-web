@@ -16,6 +16,8 @@ export class PlayerComponent implements OnInit {
   selectedContainer: string;
   ws: WebSocket = null;
 
+  showLoading: boolean = false;
+
   constructor() {
 
   }
@@ -31,12 +33,14 @@ export class PlayerComponent implements OnInit {
     // this.containerList.push('Nuance Frame');
 
     this.codecList.push('Opus');
+    this.showLoading=false;
 
   }
 
   browseFile(fileInput: Event) {
     console.log('browser file');
     this.selectedFile = (<HTMLInputElement>fileInput.target).files[0];
+    this.showLoading=false;
   }
 
   sendToServer() {
@@ -54,16 +58,19 @@ export class PlayerComponent implements OnInit {
     const query_end = {
       message: 'query_end',
     };
+    const _ws = this.ws;
+    let _t = this;
 
     this.ws = new WebSocket('wss://' + location.host + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
+      _t.showLoading=true;
       this.ws.send(JSON.stringify(query_begin));
       this.ws.send(fr.result);
       this.ws.send(JSON.stringify(query_end));
     };
 
-    const _ws = this.ws;
+
     let rate = 8000;
     this.ws.onmessage = function (event) {
       console.log(event.data);
@@ -72,9 +79,11 @@ export class PlayerComponent implements OnInit {
         if (res['message'] === 'res_begin') {
           console.log('res_begin');
           rate = res['rate'];
+
         }
         if (res['message'] === 'res_end') {
           console.log('res_end');
+          _t.showLoading=false;
           _ws.close();
         }
       } else {
