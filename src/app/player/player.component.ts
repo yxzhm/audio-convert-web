@@ -64,7 +64,7 @@ export class PlayerComponent implements OnInit {
     this.ws = new WebSocket('wss://' + location.host + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
-      _t.showLoading=true;
+
       this.ws.send(JSON.stringify(query_begin));
       this.ws.send(fr.result);
       this.ws.send(JSON.stringify(query_end));
@@ -72,6 +72,10 @@ export class PlayerComponent implements OnInit {
 
 
     let rate = 8000;
+    this.ws.onerror = function (event) {
+      _t.showLoading=false;
+      console.log('websocket error');
+    };
     this.ws.onmessage = function (event) {
       console.log(event.data);
       if (typeof(event.data) === 'string') {
@@ -100,7 +104,7 @@ export class PlayerComponent implements OnInit {
 
         audioBuffer.getChannelData(0).set(audioToPlay);
         source.buffer = audioBuffer;
-
+        _t.showLoading=true;
         source.connect(audioContext.destination);
         source.start(0);
 
