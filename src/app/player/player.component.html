@@ -27,7 +27,7 @@
   </select>
   <p></p>
   <p></p>
-  <button type="button" class="btn btn-lg btn-primary btn-block" (click)="sendToServer()">Covert & Play</button>
+  <button type="button" class="btn btn-lg btn-primary btn-block" (click)="sendToServer()">Play it!</button>
 
   <div class="spinner" *ngIf="showLoading">
     <div class="bounce1"></div>
@@ -36,6 +36,8 @@
   </div>
   <p></p>
   <p></p>
-  <input  #ramSelector name="ram" type="range" id="myRange" value="{{customProgress}}" max="100" class="custom-range" (change)="setRam(ramSelector.value)" *ngIf="showSlider">
-  <p class="mt-5 mb-3 text-muted">© 2019</p>
+  <input  #ramSelector name="ram" type="range" id="myRange" value="{{customProgress}}" max="100" class="custom-range" (change)="setRam(ramSelector.value)" *ngIf="showPlayer">
+  <h6 *ngIf="showPlayer">{{tip}}</h6>
+  <p class="text-danger" *ngIf="showError"><strong>Error Occurred!</strong></p>
+  <p class="mt-5 mb-3 text-muted">© 2018-2019</p>
 </form>

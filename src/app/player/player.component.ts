@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {of} from 'rxjs';
+
 
 @Component({
   selector: 'app-player',
@@ -18,10 +18,12 @@ export class PlayerComponent implements OnInit {
   ws: WebSocket = null;
 
   showLoading: boolean = false;
-  showSlider: boolean = false;
+  showPlayer: boolean = false;
+  showError: boolean = false;
   playing: boolean = false;
   customProgress: number = 0;
   customProgressStep: number = 0;
+  tip: string = '';
   interval;
 
   audioContext = null;
@@ -49,10 +51,14 @@ export class PlayerComponent implements OnInit {
     let _t = this;
     this.customProgress = 0;
     this.customProgressStep = 0;
+    this.showPlayer = false;
+    this.showLoading = true;
+    this.showError = false;
+    this.tip="";
+
     console.log('sending to server');
     console.log(this.selectedCodec);
 
-    this.showSlider = false;
     this.stop();
 
     const query_begin = {
@@ -67,9 +73,9 @@ export class PlayerComponent implements OnInit {
       message: 'query_end',
     };
     const _ws = this.ws;
-    _t.showLoading = true;
-    // this.ws = new WebSocket('wss://' + location.host + '/ws');
-    this.ws = new WebSocket('wss://' + 'audio.yxzhm.com' + '/ws');
+
+    this.ws = new WebSocket('wss://' + location.host + '/ws');
+    // this.ws = new WebSocket('wss://' + 'audio.yxzhm.com' + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
 
@@ -85,6 +91,10 @@ export class PlayerComponent implements OnInit {
       console.log('websocket error');
     };
     this.ws.onclose = function (event) {
+      _t.showLoading = false;
+      if (!_t.showPlayer){
+        _t.showError=true;
+      }
       console.log('ws closed');
     };
     this.ws.onmessage = function (event) {
@@ -172,7 +182,6 @@ export class PlayerComponent implements OnInit {
     let _t = this;
     this.stop();
 
-    this.showSlider = true;
     this.source = this.audioContext.createBufferSource();
     this.source.buffer = this.audioBuffer;
     this.source.connect(this.audioContext.destination);
@@ -180,16 +189,20 @@ export class PlayerComponent implements OnInit {
       _t.playing = false;
       console.log('Play Stopped');
     };
+    if (this.source.buffer.duration>1) {
+      this.showPlayer = true;
+      this.tip = this.source.buffer.duration+"s";
+      let offset = ((this.source.buffer.duration * progress) / 100).toFixed(2);
+      console.log("progress " + progress);
+      console.log('Play Starting, the duration is ' + this.source.buffer.duration + ' the offset is ' + offset);
+      this.customProgress = +progress;
+      this.customProgressStep = +((100 / this.source.buffer.duration).toFixed(0));
 
-    let offset = ((this.source.buffer.duration * progress) / 100).toFixed(2);
-    console.log("progress "+progress);
-    console.log('Play Starting, the duration is ' + this.source.buffer.duration + ' the offset is ' + offset);
-    this.customProgress = +progress;
-    this.customProgressStep = +((100/this.source.buffer.duration).toFixed(0));
-
-    this.playing = true;
-
-    this.source.start(0, offset);
+      this.playing = true;
+      this.source.start(0, offset);
+    }else{
+      _t.showError=true;
+    }
 
   }
 
@@ -197,12 +210,11 @@ export class PlayerComponent implements OnInit {
     if (this.playing) {
       console.log('Play Stopping ');
       this.source.stop(0);
-
+      this.source.disconnect();
     }
   }
 
   setRam(value) {
-
     console.log('Play audio at ' + value + '%');
     this.play(value);
   }
@@ -211,12 +223,11 @@ export class PlayerComponent implements OnInit {
     let _t = this;
     this.pauseTimer();
     this.interval = setInterval(() => {
-      console.log("Timer Progress is "+_t.customProgress);
-      console.log("Timer Progress step is "+_t.customProgressStep);
+      // console.log("Timer Progress is "+_t.customProgress);
+      // console.log("Timer Progress step is "+_t.customProgressStep);
       if (_t.customProgressStep > 0 && _t.customProgress<100) {
         _t.customProgress = _t.customProgress + _t.customProgressStep;
       }
-      // ((this.source.buffer.duration * progress) /100).toFixed(2);
     }, 1000);
   }
 
