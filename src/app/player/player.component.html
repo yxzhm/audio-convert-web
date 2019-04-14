@@ -28,10 +28,14 @@
   <p></p>
   <p></p>
   <button type="button" class="btn btn-lg btn-primary btn-block" (click)="sendToServer()">Covert & Play</button>
+
   <div class="spinner" *ngIf="showLoading">
     <div class="bounce1"></div>
     <div class="bounce2"></div>
     <div class="bounce3"></div>
   </div>
+  <p></p>
+  <p></p>
+  <input  #ramSelector name="ram" type="range" id="myRange" value="{{customProgress}}" max="100" class="custom-range" (change)="setRam(ramSelector.value)" *ngIf="showSlider">
   <p class="mt-5 mb-3 text-muted">© 2019</p>
 </form>

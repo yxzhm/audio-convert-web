@@ -18,45 +18,42 @@ export class PlayerComponent implements OnInit {
   ws: WebSocket = null;
 
   showLoading: boolean = false;
-  playing:boolean = false;
+  showSlider: boolean = false;
+  playing: boolean = false;
+  customProgress: number = 0;
+  customProgressStep: number = 0;
+  interval;
 
   audioContext = null;
   source = null;
+  audioBuffer = null;
 
   constructor() {
     this.audioContext = new ((<any>window).AudioContext || (<any>window).webkitAudioContext)();
-
+    this.startTimer();
   }
 
   ngOnInit() {
     this.codecList.push('Speex');
     this.codecList.push('Opus');
-    this.showLoading=false;
+    this.showLoading = false;
   }
 
   browseFile(fileInput: Event) {
     console.log('browser file');
     this.selectedFile = (<HTMLInputElement>fileInput.target).files[0];
-    this.showLoading=false;
+    this.showLoading = false;
   }
 
   sendToServer() {
     let _t = this;
-
+    this.customProgress = 0;
+    this.customProgressStep = 0;
     console.log('sending to server');
     console.log(this.selectedCodec);
 
+    this.showSlider = false;
     this.stop();
-
-    this.source = this.audioContext.createBufferSource();
-    this.source.connect(this.audioContext.destination);
-
-    this.source.onended = function(event) {
-      _t.playing = false;
-      console.log("Play Stopped");
-    };
-
-
 
     const query_begin = {
       message: 'query_begin',
@@ -70,9 +67,9 @@ export class PlayerComponent implements OnInit {
       message: 'query_end',
     };
     const _ws = this.ws;
-    _t.showLoading=true;
+    _t.showLoading = true;
     // this.ws = new WebSocket('wss://' + location.host + '/ws');
-    this.ws = new WebSocket('wss://' + "audio.yxzhm.com" + '/ws');
+    this.ws = new WebSocket('wss://' + 'audio.yxzhm.com' + '/ws');
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
 
@@ -84,15 +81,15 @@ export class PlayerComponent implements OnInit {
 
     let rate = 8000;
     this.ws.onerror = function (event) {
-      _t.showLoading=false;
+      _t.showLoading = false;
       console.log('websocket error');
     };
     this.ws.onclose = function (event) {
-      console.log("ws closed");
+      console.log('ws closed');
     };
     this.ws.onmessage = function (event) {
       console.log(event.data);
-      if (typeof(event.data) === 'string') {
+      if (typeof (event.data) === 'string') {
         const res = JSON.parse(event.data);
         if (res['message'] === 'res_begin') {
           console.log('res_begin');
@@ -101,7 +98,7 @@ export class PlayerComponent implements OnInit {
         }
         if (res['message'] === 'res_end') {
           console.log('res_end');
-          _t.showLoading=false;
+          _t.showLoading = false;
           this.close();
         }
       } else {
@@ -111,10 +108,10 @@ export class PlayerComponent implements OnInit {
           audioToPlay[i] = pcm16Buffer[i] / 32768;
         }
 
-        const audioBuffer = _t.audioContext.createBuffer(1, audioToPlay.length, rate);
-        audioBuffer.getChannelData(0).set(audioToPlay);
-        _t.source.buffer = audioBuffer;
-        _t.play(30);
+        _t.audioBuffer = _t.audioContext.createBuffer(1, audioToPlay.length, rate);
+        _t.audioBuffer.getChannelData(0).set(audioToPlay);
+
+        _t.play(0);
 
       }
 
@@ -171,20 +168,62 @@ export class PlayerComponent implements OnInit {
     }
   }
 
-  play(progress){
-    stop();
-    let offset = (this.source.buffer.duration * progress) /100;
-    console.log("Play Starting, the duration is "+this.source.buffer.duration+" the offset is"+offset);
+  play(progress) {
+    let _t = this;
+    this.stop();
 
-    this.source.start(0,offset);
-    this.playing=true;
+    this.showSlider = true;
+    this.source = this.audioContext.createBufferSource();
+    this.source.buffer = this.audioBuffer;
+    this.source.connect(this.audioContext.destination);
+    this.source.onended = function (event) {
+      _t.playing = false;
+      console.log('Play Stopped');
+    };
+
+    let offset = ((this.source.buffer.duration * progress) / 100).toFixed(2);
+    console.log("progress "+progress);
+    console.log('Play Starting, the duration is ' + this.source.buffer.duration + ' the offset is ' + offset);
+    this.customProgress = +progress;
+    this.customProgressStep = +((100/this.source.buffer.duration).toFixed(0));
+
+    this.playing = true;
+
+    this.source.start(0, offset);
+
   }
 
-  stop(){
-    if(this.playing){
-      console.log("Play Stopping ");
-      this.source.stop();
+  stop() {
+    if (this.playing) {
+      console.log('Play Stopping ');
+      this.source.stop(0);
 
+    }
+  }
+
+  setRam(value) {
+
+    console.log('Play audio at ' + value + '%');
+    this.play(value);
+  }
+
+  startTimer() {
+    let _t = this;
+    this.pauseTimer();
+    this.interval = setInterval(() => {
+      console.log("Timer Progress is "+_t.customProgress);
+      console.log("Timer Progress step is "+_t.customProgressStep);
+      if (_t.customProgressStep > 0 && _t.customProgress<100) {
+        _t.customProgress = _t.customProgress + _t.customProgressStep;
+      }
+      // ((this.source.buffer.duration * progress) /100).toFixed(2);
+    }, 1000);
+  }
+
+  pauseTimer() {
+    console.log('pauseTimer');
+    if (this.interval != null) {
+      clearInterval(this.interval);
     }
   }
 }
