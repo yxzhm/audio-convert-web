@@ -12,6 +12,7 @@ export class PlayerComponent implements OnInit {
   containerList: string[] = [];
 
   selectedFile: File = null;
+  fileName: string ='';
   selectedCodec: string;
   selectedParameter: string;
   selectedContainer: string;
@@ -44,6 +45,7 @@ export class PlayerComponent implements OnInit {
   browseFile(fileInput: Event) {
     console.log('browser file');
     this.selectedFile = (<HTMLInputElement>fileInput.target).files[0];
+    this.fileName=this.selectedFile.name;
     this.showLoading = false;
   }
 
